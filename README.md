@@ -6,12 +6,12 @@ Work with a config file like this:
 
 ```
 {
-"maxZoom": number,
-"minZoom": number,
-"zoomWarn": number,
-"delayMs": number,
-"url": string,
-"consecutiveErrorToStop": number,
-"verbose": boolean
+  "maxZoom": number,
+  "minZoom": number,
+  "zoomWarn": number,
+  "delayMs": number,
+  "url": string,
+  "consecutiveErrorToStop": number,
+  "verbose": boolean
 }
 ```
