@@ -1,60 +1,85 @@
 import axios from "axios";
 import fs from "fs/promises";
-const MAXZOOM = 2;
-const MINZOOM = 0;
-const ZOOMWARN = 13;
-const URLMAP = ``;
-const delayMs = 1000;
+import { createLogFolder, log } from "./utils/logUtil";
+import { delay, getDateString } from "./utils/timeUtil";
+import config from "../config.json";
+
+let tileTotalCounter = 0;
 let totalCounter = 0;
+let totalCounterError = 0;
 let zoomCounter = 0;
 let currentDir = `${__dirname}/..`;
+let consecutiveError = 0;
 
-const delay = (delayInms) => {
-  return new Promise((resolve) => setTimeout(resolve, delayInms));
+const init = async () => {
+  await createLogFolder();
+  log(`MapExtractor starting ...`, true);
+  log(`MapExtractor MINZOOM = ${config.minZoom}`, config.verbose);
+  log(`MapExtractor MAXZOOM = ${config.maxZoom}`, config.verbose);
+  if (config.zoomWarn)
+    log(`MapExtractor ZOOMWARN = ${config.zoomWarn}`, config.verbose);
+  log(`MapExtractor URLMAP = ${config.url}`, config.verbose);
+  await createFolder();
+  log(
+    `${config.maxZoom - config.minZoom + 1} zoom to extract.`,
+    config.verbose
+  );
+  for (let z = config.minZoom; z <= config.maxZoom; z++) {
+    tileTotalCounter += Math.pow(2, z) * Math.pow(2, z);
+  }
+  log(`${tileTotalCounter} tiles to extract.`, config.verbose);
+  let numberDay = (tileTotalCounter * config.delayMs) / 1000 / 60 / 60 / 24;
+  log(`${numberDay} day for extract all.`, true);
 };
 
 const main = async () => {
-  console.log(`MapExtractor starting ...`);
-  console.log(`MapExtractor MINZOOM = ${MINZOOM}`);
-  console.log(`MapExtractor MAXZOOM = ${MAXZOOM}`);
-  console.log(`MapExtractor ZOOMWARN = ${ZOOMWARN}`);
-  console.log(`MapExtractor URLMAP = ${URLMAP}`);
-  await createFolder();
-  for (let z = MINZOOM; z <= MAXZOOM; z++) {
+  await init();
+
+  for (let z = config.minZoom; z <= config.maxZoom; z++) {
     await fs.mkdir(`${currentDir}/${z}`);
-    console.log(`Starting zoom ${z}.`);
+    log(`Starting zoom ${z}.`, config.verbose);
     zoomCounter = 0;
     for (let y = 0; y < Math.pow(2, z); y++) {
       await fs.mkdir(`${currentDir}/${z}/${y}`);
       for (let x = 0; x < Math.pow(2, z); x++) {
-        console.log(`Searching ${URLMAP}${z}/${y}/${x}`);
-        await delay(delayMs);
+        if (consecutiveError > config.consecutiveErrorToStop) {
+          log(`${consecutiveError} consecutive errors. Stopping ...`, true);
+          return;
+        }
+        log(`Searching ${config.url}${z}/${y}/${x}`, config.verbose);
+        await delay(config.delayMs);
         axios
-          .get(`${URLMAP}${z}/${y}/${x}.png`, { responseType: "arraybuffer" })
+          .get(`${config.url}${z}/${y}/${x}.png`, {
+            responseType: "arraybuffer",
+          })
           .then(async (result) => {
-            console.log(result.data);
             await fs.writeFile(
               `${currentDir}/${z}/${y}/${x}.png`,
               Buffer.from(result.data)
             );
             totalCounter++;
             zoomCounter++;
+            consecutiveError = 0;
           })
           .catch((err) => {
-            console.log(`Can't download ${URLMAP}${z}/${y}/${x}.png`);
-            console.log(err);
+            consecutiveError++;
+            totalCounterError++;
+            log(
+              `Can't download ${config.url}${z}/${y}/${x}.png`,
+              config.verbose
+            );
+            log(err);
           });
       }
     }
-    console.log(`Nombre de fichier pour le zoom ${z}: ${zoomCounter}`);
+    log(`Total file for zoom ${z}: ${zoomCounter}`, config.verbose);
   }
-
-  console.log(`Nombre de fichier total: ${totalCounter}`);
+  log(`Total file with success: ${totalCounter}`, true);
+  log(`Total file with error: ${totalCounter}`, true);
 };
 
 const createFolder = async () => {
-  console.log(currentDir);
-  const date = Date.now().toString();
+  const date = getDateString();
   await fs.mkdir(`${currentDir}/MapTiles${date}`);
   currentDir = `${currentDir}/MapTiles${date}`;
 };
