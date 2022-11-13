@@ -8,7 +8,7 @@ let tileTotalCounter = 0;
 let totalCounter = 0;
 let totalCounterError = 0;
 let zoomCounter = 0;
-let currentDir = `${__dirname}/..`;
+let currentDir = `${__dirname}/../..`;
 let consecutiveError = 0;
 
 const init = async () => {
@@ -48,28 +48,28 @@ const main = async () => {
         }
         log(`Searching ${config.url}${z}/${y}/${x}`, config.verbose);
         await delay(config.delayMs);
-        axios
-          .get(`${config.url}${z}/${y}/${x}.png`, {
-            responseType: "arraybuffer",
-          })
-          .then(async (result) => {
-            await fs.writeFile(
-              `${currentDir}/${z}/${y}/${x}.png`,
-              Buffer.from(result.data)
-            );
-            totalCounter++;
-            zoomCounter++;
-            consecutiveError = 0;
-          })
-          .catch((err) => {
-            consecutiveError++;
-            totalCounterError++;
-            log(
-              `Can't download ${config.url}${z}/${y}/${x}.png`,
-              config.verbose
-            );
-            log(err);
-          });
+        // axios
+        //   .get(`${config.url}${z}/${y}/${x}.png`, {
+        //     responseType: "arraybuffer",
+        //   })
+        //   .then(async (result) => {
+        //     await fs.writeFile(
+        //       `${currentDir}/${z}/${y}/${x}.png`,
+        //       Buffer.from(result.data)
+        //     );
+        //     totalCounter++;
+        //     zoomCounter++;
+        //     consecutiveError = 0;
+        //   })
+        //   .catch((err) => {
+        //     consecutiveError++;
+        //     totalCounterError++;
+        //     log(
+        //       `Can't download ${config.url}${z}/${y}/${x}.png`,
+        //       config.verbose
+        //     );
+        //     log(err);
+        //   });
       }
     }
     log(`Total file for zoom ${z}: ${zoomCounter}`, config.verbose);
@@ -80,7 +80,14 @@ const main = async () => {
 
 const createFolder = async () => {
   const date = getDateString();
-  await fs.mkdir(`${currentDir}/MapTiles${date}`);
+  try {
+    await fs.mkdir(`${currentDir}/MapTiles${date}`);
+    log(`MapTiles folder created.`);
+  } catch (err) {
+    await fs.rm(`${currentDir}/MapTiles${date}/`, { recursive: true });
+    await fs.mkdir(`${currentDir}/MapTiles${date}`);
+    log(`MapTiles folder already exist.`);
+  }
   currentDir = `${currentDir}/MapTiles${date}`;
 };
 

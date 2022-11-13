@@ -2,9 +2,9 @@
   "name": "mapextractor",
   "version": "1.0.0",
   "description": "",
-  "main": "dist/App.js",
+  "main": "dist/src/App.js",
   "scripts": {
-    "start": "tsc && node dist/App.js",
+    "start": "tsc && node dist/src/App.js",
     "lint": "eslint . --ext .ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

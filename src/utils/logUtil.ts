@@ -1,9 +1,7 @@
 import fs from "fs/promises";
 import { getDateString, getTimeString } from "./timeUtil";
 
-// Log file for current exec
-let logFile: string;
-let currentDir = `${__dirname}/..`;
+let currentDir = `${__dirname}/../../..`;
 
 export const createLogFolder = async (): Promise<void> => {
   try {
@@ -18,6 +16,6 @@ export const log = async (str: string, withConsole: boolean = false) => {
   if (withConsole) console.log(str);
   await fs.appendFile(
     `${currentDir}/Logs/${getDateString()}.log`,
-    `${getTimeString()} -- ${str}`
+    `${getTimeString()} -- ${str}\r\n`
   );
 };
