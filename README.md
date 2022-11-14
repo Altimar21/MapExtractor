@@ -2,7 +2,7 @@
 
 Simply tool for extract Map Tile from tileServer
 
-Work with a config file like this:
+Work with a config.json file:
 
 ```
 {
